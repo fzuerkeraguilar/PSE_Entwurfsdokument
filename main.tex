@@ -1,0 +1,34 @@
+\documentclass[paper=a4, fontsize = 12pt, DIV = calc, twoside=off, parskip=full, numbers=noenddot]{scrbook}
+\input{preamble}
+\input{glossary}
+
+\title{{WAMS}\\
+{\Large{Workflow Application for Material Sciences}}\\
+{Entwurfsdokument}}
+\author{Dominik Siebelt \and Max Umbach 
+        \and Maxim Besser \and Isabel Kraft \and Fabian Zürker}
+\date{Dezember 2021}
+
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\include{Kapitel/Introduction}
+\include{Kapitel/Architekturdesign}
+\include{Kapitel/Klassebbesch}
+\include{Kapitel/Abläufe}
+\include{Kapitel/Anhang}
+
+%Exportieren von Dag definition files über Applikation exportieren
+%Braucht man um Workflow Instanzen sowie Workflows zu erportieren
+\end{document}
+
+%PRIO1
+%Hochladen von Dateien (Config)
+%Dateiexplorer und Festlegen von Orten für Ergebnisse
+
+%PRIO2 TODO
+%Liveanzeige von Logdateien

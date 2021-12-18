@@ -1,0 +1,70 @@
+\chapter{Einleitung}
+WAMS wird als Plugin in die Rahmenarchitektur von Airflow eingebunden.
+Dies ermöglicht folgende Funktionalitäten über die Funktionen von Airflow hinaus: 
+\begin{itemize}
+    \item Funktionen von Airflow können direkt übernommen werden.
+    \item Die aktuelle Airflow Version kann verwendet werden.
+    \item Unkomplizierte Inbetriebnahme von WAMS als Airflow Plugin
+\end{itemize}
+%
+%Dies ermöglicht das Apache Airflow unabhängig von WAMS aktualisiert werden kann.
+%Dies verbessert die Erweiterbarkeit von WAMS durch die Installation von Airflow Plugins.
+%Dies ermöglicht das WAMS erweiterbar ist durch die Installation von Airflow Plugins.
+%Dies ermöglicht eine Verwendung von der aktuellen Airflow Version selbst bei updates.
+
+\section{Paketstruktur}
+
+WAMS ist in mehrere Pakete unterteilt. In diesen sind Klassen mit ähnlichen Funktionen zusammengefasst.
+
+
+Da WAMS eine Erweiterung von Airflow ist werden unter anderem folgende Funktionen von Airflow übernommen:
+\begin{itemize}
+    \item Weboberfläche
+    \item Web Server
+    \item Workflowspeicherung
+    \item Parametrierung von Workflows
+    \item Datenbank für Metadaten
+    \item Ablaufplanung von Workflows
+    \item Ausführung von Workflows
+\end{itemize}
+WAMS bindet an unterschiedlichen Stellen des Modells von Airflow an.
+Daher wird für WAMS keine Model-View-Controller Struktur verwendet.
+%Da die Erweiterungen von WAMS an vielen Stellen des Modells von Airflow anbinden, wird für WAMS keine Model-View-Controller Struktur verwendet.
+Stattdessen wird WAMS in Pakete aufgeteilt, welche jeweils einer Funktionalität von WAMS entsprechen.
+
+%Dabei liegt der Fokus auf einer Aufteilung in unterschiedliche Funktionen. 
+%Das führt dazu, dass WAMS modular aufgebaut ist. 
+%So können einzelne Funktionen von WAMS auch für andere ähnliche Plugins verwendet werden.
+%Im Vergleich zur Aufteilung der Funktionen in mehrere Pakete ist dies durch die gewählte Paketstruktur einfach möglich.
+%Es müssen lediglich die Pakete in ein anderes Plugin übernommen werden. 
+Die Hauptaufgaben von WAMS liegen im Bereitstellen mehrere Funktionen in der Weboberfläche.
+Folgende Pakete mit Funktionen stellt WAMS bereit:
+\begin{itemize}
+    \item Code Editor
+    \item Result View
+    \item Metadata Explorer
+    \item Operators
+\end{itemize}
+Diese Pakete werden in den nächsten Abschnitten einzeln behandelt.
+Weiter greift WAMS auf mehrere Pakete innerhalb von Apatche Airflow (\textit{airflow}) zu, insbesondere auf das Paket \textit{airflow.plugin\_manager} und auf das Paket \textit{airflow.api}. Das Paket \textit{airflow.plugin\_manager} enthält dabei die Schnittstelle, die die Einbindung von WAMS als Plugin ermöglicht.
+Das Paket \textit{airflow.api} enthält die Anwendungsprogrammierschnittstelle von Apatche Airflow.
+
+\subsection{Code-Editor}
+Der Code-Editor dient dazu den Python-Quellcode von Workflows in der Weboberfläche ändern zu können.
+Hierbei wird das Airflow Plugin \gls{airflow-code-editor} von WAMS verwendet.
+
+%Der hier kommt nicht als Paket im Klassendiagramm vor.
+%\subsection{File-Explorer}
+%Der File-Explorer dient dazu die Ordnerstruktur der Workflows und ihrer bei der Ausführung benötigten oder erzeugten Daten einzusehen und verändern zu können. 
+%So realisieren die in ihm enthaltenen Klassen etwa auch die Funktion, dass Developer Konfigurationsdateien und andere Textdateien hochladen können, wenn ein Workflow dies zur Ausführung benötigt.
+\subsection{Result View}
+Das Result View Paket erweitert die Weboberfläche von Airflow mit einem Tab zum Einsehen der Ergebnisse der Ausführungen von Workflows.
+
+
+\subsection{Metadata Explorer}
+Das Metadata Explorer Paket erweitert die Weboberfläche von Airflow mit einem Tab zum Einsehen der Metadaten einer Ausführung von Workflows. Die Metadaten werrden über die Airflow API ermittelt.
+
+\subsection{Operators}
+Das Operators Paket bündelt die in WAMS enthaltene Erweiterung der bereits in Apatche Airflow existierenden Operators. 
+In ihm sind Operatoren enthalten, die zu einer einfachen Anwendung von TGDS Workflows gedacht sind.
+Außerdem ist ein Operator enthalten, der das Abspeichern von Ergebnissen und Zwischenergebnissen stark vereinfacht.
