@@ -1,4 +1,84 @@
 \chapter{Design}
+WAMS passt Airflow an die Bedürfnisse des Kunden an. WAMS liefert eine auf Experimente der Material- und Datenwissenschaften abgestimmte Konfiguration von Airflow, sowie zusätzlich benötigte Funktionalität in Form eines Airflow Plugins. Da die Webansicht von Airflow auf dem Flask Framework \gls{AppBuilder} basiert, bringt unser Plugin weitere Ansichten mit, die unter der Menüleiste eingefügt werden.
+
+\section{Airflow Konfiguration}
+\subsection{Nutzerverwaltung}
+Airflow bietet standardmäßig fünf Nutzerklassen an auf die es alle Berechtigungen verteilt. Da WAMS nur drei Nutzerklassen hat, werden die Rechte wie folgt reduziert:
+\begin{itemize}
+    \item Admin: übernehmen die Rolle des \gls{Op} und erhalten für alle Bereiche
+    Lese- und Schreibrechte. 
+    \item Developer: erhalten Lese- und Schreibrechte für alle Bereiche, außer der Konfiguration von Airflow.
+    \item Reviewer: erhält nur Leserechte.
+\end{itemize}
+
+Airflow übernimmt die Login-Seite von \gls{AppBuilder} und kann somit nach der Dokumentation von Flask \gls{AppBuilder} angepasst werden, um die Registrierung neuer
+Nutzer anzubieten. Auch die neuen Ansichten, die von WAMS geliefert werden nutzen die 
+Nutzerverwaltung von Flask \gls{AppBuilder}.
+
+\section{Plugin}
+Airflow bietet nativ noch nicht alle gewünschten Funktionalitäten. Daher bietet WAMS
+noch drei weitere Ansichten um den gewünschten Funktionsumfang zu erreichen. Diese sind:
+\begin{itemize}
+    \item Editor-Ansicht: zum Editieren der DAG-Definitions-Dateien
+    \item Result-Ansicht: zur Auflistung und Anzeigen der durch Workflows erstellte Dateien
+    \item Metrics-Ansicht: zur Auflistung der ausgeführten Workflows-Instanzen 
+    und den dazugehörigen Metadaten
+\end{itemize}
+Als zusätzliche Komponente bringt WAMS eine eigene Datenbank für die 
+Speicherung der benutzerdefinierten Resultate und Zwischenergebnisse von Workflows-Instanzen und die dauerhafte Speicherung von Metadaten mit. Die Datenbank befindet sich in einem eigenen Container und kann von den anderen Ansichten über eine API angesprochen werden. %lebt? Sagt man das so?
+
+\subsection{Editor-Ansicht}
+Um das Editieren von Workflows in der Weboberfläche von Airflow zu ermöglichen, bedienen wir uns an dem bereits existierendem Plugin \gls{airflow-code-editor}. %Muss noch überarbeitet werden weiß nicht genau was wir da abgeändert haben
+Dieses Plugin implementiert bereits eine Anzeige für die Ordnerstruktur und die Editierung von Textdateien in der Weboberfläche von Airflow.
+Dabei nutzt es den Javascript Editor \gls{Codemirror}. Über die gewünschte Funktionalität hinaus bietet \gls{airflow-code-editor} zudem noch eine Git-Integration über die gleiche Weboberfläche an. %Diese Weboberfläche binden wir in unser Plugin ein, um dessen Funktionalität anzubieten. %wessen?
 
 
-\blindtext
+Um die Weboberfläche von \gls{airflow-code-editor} für unsere Anwendung zu nutzen, braucht es noch folgende Anpassungen:
+
+\begin{itemize}
+    \item Das Hauptverzeichnis wird von \verb!$AIRFLOW_HOME/! zu \verb!$AIRFLOW_HOME/dags/! geändert.
+    \item In der Titelleiste von Airflow wird ein Reiter hinzugefügt, über den man auf die Weboberfläche des Plugins zugreifen kann.
+    \item Die Zugriffsberechtigung auf die Weboberfläche muss von Admin auf Developer erweitert werden.
+\end{itemize}
+
+\subsection{Results-Ansicht}
+Damit Nutzer von WAMS für einzelne Durchläufe eines Workflows jeweils Resultate abspeichern und über die Weboberfläche auf diese zugreifen können, bietet WAMS einen eigenen Operator (SaveResultsOperator) für die Speicherung von ausgewählten Dateien und eine weitere Webansicht für eine Ansicht der Ergebnisse.
+
+\subsubsection{SaveResultsOperator}
+Der Operator ist eine Unterklasse des BaseOperator von Airflow. Er nimmt als Argumente ein Verzeichnis, das er sichern soll oder eine Liste an Dateien, die gesichert werden sollen. Er kann am Schluss des Workflows ausgeführt werden, um ein Gesamtresultat zu speichern oder nach einzelnen Operatoren ausgeführt werden, um auch Zwischenresultate zu speichern.
+
+Während seiner Ausführung baut er eine Verbindung mit der Datenbank von WAMS auf und legt die gewünschten Dateien in dieser ab. Der Operator übergibt der Datenbank neben den zu sichernden Dateien noch Informationen über den Workflow und der Workflow-Instanz, die den Operator ausführt, sodass die Datenbank die Dateien richtig zuordnen und eindeutig ablegen kann.
+
+
+\subsubsection{Results-Webansicht}
+Die Webansicht der erzeugten Ergebnisse wird mit Hilfe von Flask \gls{AppBuilder} erzeugt und enthält Komponenten, die die Workflows, Workflow-Instanzen und Workflowinstanzergebnisse aus der Datenbank abfragen und graphisch in der Weboberfläche darstellen können.
+
+
+\subsection{Metadaten-Ansicht}
+Da Airflow bereits eine API für den Zugriff auf Metadaten besitzt, wird die Metadaten-Ansicht von WAMS diese verwenden. 
+Die Metadaten einer Workflowinstanz werden beim Löschen des zugehörigen Workflows oder beim Löschen der Workflowinstanz ebenfalls gelöscht. Um die Persistenz der Metadaten zu gewährleisten, werden die Metadaten einer Workflow-Instanz in der Datenbank von WAMS hinterlegt. Die Daten in der WAMS Datenbank sind dabei immutable und werden beim Löschen des Workflows nicht entfernt.
+
+Die Aufgaben der Metadaten-Ansicht werden dabei wie folgt auf Klassen aufgeteilt:
+Eine Klasse, die dafür zuständig ist, die Metadaten einer Worfklowinstanz, eine Liste von Instanzen eines Workflows und eine Liste von Workflows aus der WAMS-Datenbank zu holen. Diese Klasse hat dabei keinen Einfluss auf die GUI.
+Zwei Klassen, die gemeinsam mit dem Flask-Blueprint dieser Ansicht für die graphische Darstellung der Workflows, Workflow-Instanzen und Metadaten verantwortlich sind. Eine Klasse ist dabei dafür zuständig, die Metadaten, welche als .json Datei vorliegen, graphisch darzustellen.
+
+\subsection{WAMS-Datenbank}
+Airflow nutzt bereits eine Datenbank für die Speicherung der Metadaten der Ausführungen von Workflows. Folgende Beschränkungen führen dazu, dass die Datenbank nicht ohne Anpassung von WAMS übernommen werden kann:
+\begin{itemize}
+    \item Die Metadaten gelöschter Workflows werden nicht erhalten.
+    \item Es gibt keine Möglichkeit Dateien als Resultat von Workflows zu sichern.
+\end{itemize}
+
+Somit dient die WAMS-Datenbank sowohl als ein Speicher für die Ergebnisse und Zwischenergebnissen von Workflow-Ausführungen als auch eine Erweiterung der Airflow-Datenbank. Die WAMS-Datenbank wird Über eine API-Klasse, die POST- und GET-Methoden anbietet, angesprochen. Diese Klasse trifft abhängig von der Anfrage die Entscheidung, ob Metadaten oder Resultate einer Workflow-Instanz angefragt werden und delegiert die Beschaffung an andere Klassen.
+
+Wird eine Datei angefordert, die Ergebnis einer Workflow-Instanz war, wird diese Anfrage an
+die ResultHandler-Klasse weitergeleitet. Die ResultHandler-Klasse speichert die Ergebnisse
+nach der dazugehörigen Workflow-Instanz in einem Verzeichnis und beschafft diese auf
+Anfrage. Dabei werden gleichzeitig die Metadaten für die ausführende Workflow-Instanz
+in einer MySQL-Datenbank gespeichert.
+
+Wird eine Anfrage nach Metadaten zu einer Workflow-Instanz gestellt, wird diese 
+MetricsGetter weitergeleitet. MetricsGetter versucht zunächst eine Anfrage über die
+Airflow-Datenbank aufzulösen. Falls diese Anfrage jedoch erfolglos war, wird eine weitere
+Anfrage an die eigene MySQL-Datenbank gestellt. Somit besteht auch nach Löschung eines 
+Workflows die Möglichkeit auf Metadaten gelöschter Workflows zuzugreifen. Somit ist das Prinzip der Transparenz eingehalten, da für den Anwender nicht ersichtlich ist, aus welcher Datenbank die Informationen und Ergebnisse stammen, aber auch sichergestellt wird, dass immer die aktuellsten und korrekte Ergebnisse geliefert werden.
